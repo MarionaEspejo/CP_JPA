@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence/orm http://xmlns.jcp.org/xml/ns/persistence/orm_2_2.xsd" version="2.2">
+    <entity class="org.milaifontanals.model.Usuari" access="FIELD" metadata-complete="true">
+        <table name="usuari">
+        </table>
+        <attributes>
+            <id name="id">
+                <column name="usr_id"/>
+            </id>
+            <basic name="nom">
+                <column name="usr_nom"/>
+            </basic>
+            <basic name="cognom1">
+                <column name="usr_cognom1"/>
+            </basic>
+            <basic name="cognom2">
+                <column name="usr_cognom2"/>
+            </basic>
+            <basic name="dataNaixement">
+                <column name="usr_data_naixament"/>
+                <temporal>TIMESTAMP</temporal>
+            </basic>
+            <basic name="login">
+                <column name="usr_login"/>
+            </basic>
+            <basic name="passwordHash">
+                <column name="usr_psswd_hash"/>
+            </basic>
+            <one-to-many name="projectes" mapped-by="usuari"/>
+            <element-collection name="tasques"> <!--Nom del camp de la classe -->
+                <collection-table name="tasca">  <!--Nom de la taula de la bd -->
+                    <join-column name="tasc_responsable"/> 
+                </collection-table>
+            </element-collection>
+            <transient name="tasques"/>
+        </attributes>
+    </entity>
+</entity-mappings>
