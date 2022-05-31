@@ -8,25 +8,29 @@ package org.milaifontanals.jpa;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.Query;
 import org.mf.persistence.GestioProjectesException;
 import org.mf.persistence.IGestioProjectes;
+import org.milaifontanals.model.Projecte;
+import org.milaifontanals.model.ProjecteUsuariRol;
+import org.milaifontanals.model.Rol;
+import org.milaifontanals.model.Usuari;
 
-/**
- *
- * @author anna9
- */
 public class GestioProjectesJPA implements IGestioProjectes {
+
     private EntityManager em;
+    private HashMap<Integer, Usuari> hmUsuaris = new HashMap();
 
     public GestioProjectesJPA() throws GestioProjectesException {
         this("GestioProjectesJPA.properties");
     }
-    
+
     public GestioProjectesJPA(String nomFitxerPropietats) throws GestioProjectesException {
         if (nomFitxerPropietats == null) {
             nomFitxerPropietats = "GestioProjectesJPA.properties";
@@ -60,7 +64,7 @@ public class GestioProjectesJPA implements IGestioProjectes {
         }
 
     }
-    
+
     @Override
     public void closeCapa() throws GestioProjectesException {
         if (em != null) {
@@ -76,7 +80,7 @@ public class GestioProjectesJPA implements IGestioProjectes {
                     emf.close();
                 }
             }
-        }    
+        }
     }
 
     @Override
@@ -117,6 +121,104 @@ public class GestioProjectesJPA implements IGestioProjectes {
     public void closeTransaction(char typeClose) throws GestioProjectesException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
-    
+
+    @Override
+    public List<Usuari> getLlistaUsuaris() throws GestioProjectesException {
+        Query query = em.createQuery("select u from Usuari u", Usuari.class);
+        List<Usuari> usuaris = query.getResultList();
+        return usuaris;
+    }
+
+    @Override
+    public List<Projecte> getLlistaProjectes(Usuari usuari) throws GestioProjectesException {
+        Query query = em.createQuery("select pur.projecte from ProjecteUsuariRol pur where pur.usuari = :pUsuari", Projecte.class);
+        query.setParameter("pUsuari", usuari);
+        List<Projecte> projectes = query.getResultList();
+        return projectes;
+    }
+
+    @Override
+    public List<Projecte> getLlistaProjectesNoAssignats(Usuari usuari) throws GestioProjectesException {
+        Query query = em.createQuery("select distinct p from ProjecteUsuariRol pur right join pur.projecte p where pur.usuari is null or p not in (Select p from ProjecteUsuariRol pur join pur.projecte p where pur.usuari =: pUsuari)", Projecte.class);
+        query.setParameter("pUsuari", usuari);
+        List<Projecte> projectes = query.getResultList();
+        return projectes;
+    }
+
+    @Override
+    public Usuari getUsuari(int id) throws GestioProjectesException {
+        return em.find(Usuari.class, (int) id);
+    }
+
+    @Override
+    public Projecte getProjecte(int id) throws GestioProjectesException {
+        return em.find(Projecte.class, (int) id);
+    }
+
+    @Override
+    public Rol getRol(int id) throws GestioProjectesException {
+        return em.find(Rol.class, (int) id);
+    }
+
+    @Override
+    public Rol getRolUsu(Projecte idProj, Usuari idUsu) throws GestioProjectesException {
+        Query query = em.createQuery("select pur.rol "
+                + "from ProjecteUsuariRol pur "
+                + "where pur.usuari =: idUsu and pur.projecte =: idProj ", Rol.class);
+        query.setParameter("idProj", idProj);
+        query.setParameter("idUsu", idUsu);
+        Rol rol = (Rol) query.getSingleResult();
+        return rol;
+    }
+
+    @Override
+    public int deleteUsuari(int id) throws GestioProjectesException {
+        Usuari usu = em.find(Usuari.class, (int) id);
+        em.getTransaction().begin();
+        em.merge(usu);
+        em.remove(usu);
+        em.getTransaction().commit();
+        return 0;
+    }
+
+    @Override
+    public int insertUsuari(Usuari usu) throws GestioProjectesException {
+        em.getTransaction().begin();
+        em.persist(usu);
+        em.getTransaction().commit();
+        return 0;
+    }
+
+    @Override
+    public int updateUsuari(Usuari usu) throws GestioProjectesException {
+        em.getTransaction().begin();
+        Usuari usuUpdate = em.find(Usuari.class, (int) usu.getID());
+        usuUpdate.setNom(usu.getNom());
+        usuUpdate.setCognom1(usu.getCognom1());
+        usuUpdate.setCognom2(usu.getCognom2());
+        usuUpdate.setDataNaix(usu.getDataNaix());
+        usuUpdate.setLogin(usu.getLogin());
+        usuUpdate.setHashPasswd(usu.getPasswdHash());
+        em.merge(usuUpdate);
+        em.persist(usuUpdate);
+        em.getTransaction().commit();
+        return 0;
+    }
+
+    @Override
+    public void assignarProjecte(Usuari usu, Projecte proj, Rol rol) throws GestioProjectesException {
+        em.getTransaction().begin();
+        ProjecteUsuariRol pur = new ProjecteUsuariRol(proj, usu, rol);
+        em.persist(pur);
+        em.getTransaction().commit();
+    }
+
+    @Override
+    public void desassignarProjecte(Usuari usu, Projecte proj, Rol rol) throws GestioProjectesException {
+        em.getTransaction().begin();
+        ProjecteUsuariRol pur = new ProjecteUsuariRol(proj, usu, rol);
+        em.remove(em.merge(pur));
+        em.getTransaction().commit();
+    }
+
 }

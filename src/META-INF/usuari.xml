@@ -18,7 +18,7 @@
             </basic>
             <basic name="dataNaixement">
                 <column name="usr_data_naixament"/>
-                <temporal>TIMESTAMP</temporal>
+                <temporal>DATE</temporal>
             </basic>
             <basic name="login">
                 <column name="usr_login"/>
@@ -27,12 +27,8 @@
                 <column name="usr_psswd_hash"/>
             </basic>
             <one-to-many name="projectes" mapped-by="usuari"/>
-            <element-collection name="tasques"> <!--Nom del camp de la classe -->
-                <collection-table name="tasca">  <!--Nom de la taula de la bd -->
-                    <join-column name="tasc_responsable"/> 
-                </collection-table>
-            </element-collection>
-            <transient name="tasques"/>
+            <one-to-many name="tasques" mapped-by="responsable"/>
         </attributes>
     </entity>
+
 </entity-mappings>
