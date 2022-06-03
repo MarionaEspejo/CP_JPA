@@ -100,6 +100,13 @@ public class GestioProjectesJPA implements IGestioProjectes {
     }
 
     @Override
+    public List<Rol> getRols() throws GestioProjectesException {
+        Query query = em.createQuery("select id, nom from Rol", Rol.class);
+        List<Rol> rols = query.getResultList();
+        return rols;
+    }
+
+    @Override
     public void rollback() throws GestioProjectesException {
         try {
             if (!em.getTransaction().isActive()) {
